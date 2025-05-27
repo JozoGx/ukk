@@ -32,7 +32,7 @@ class Siswa extends Model
 
     public function pkl()
     {
-        return $this->hasOne(Pkl::class); // atau ->hasMany(...) jika lebih dari 1
+        return $this->hasOne(Pkl::class); 
     }
 
 }
