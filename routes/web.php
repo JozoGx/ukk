@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PklController;
 use App\Http\Controllers\DashboardPklController;
+use App\Http\Controllers\IndustriController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -28,7 +28,5 @@ Route::middleware([
         Route::put('/{pkl}', [DashboardPklController::class, 'update'])->name('update');
         Route::delete('/{pkl}', [DashboardPklController::class, 'destroy'])->name('destroy');
     });
-
-    // Halaman posts (jika memang digunakan)
-    Route::get('/posts', [PklController::class, 'showPosts'])->name('posts');
+    Route::resource('industri', IndustriController::class);
 });
