@@ -1,4 +1,4 @@
-<?php
+<!-- 
 
 namespace App\Http\Controllers;
 
@@ -65,4 +65,4 @@ class PklController extends Controller
         $posts = Post::with('siswa')->latest()->get(); 
         return view('posts.index', compact('posts'));
     }
-}
+} -->

@@ -28,6 +28,20 @@ class SiswaResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\FileUpload::make('foto')
+                    ->label('Foto Siswa')
+                    ->image()
+                    ->directory('siswa-photos')
+                    ->disk('public')
+                    ->imageEditor()
+                    ->imageEditorAspectRatios([
+                        '1:1',
+                        '4:3',
+                    ])
+                    ->maxSize(2048)
+                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                    ->columnSpanFull(),
+
                 Forms\Components\TextInput::make('nama')
                     ->required()
                     ->maxLength(255),
@@ -68,6 +82,24 @@ class SiswaResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('foto')
+                    ->label('Foto')
+                    ->height(50)
+                    ->width(50)
+                    ->circular()
+                    ->getStateUsing(function ($record) {
+                        if ($record->foto) {
+                            return asset('storage/' . $record->foto);
+                        }
+                        return asset('storage/siswa-photos/default-avatar.png');
+                    })
+                    ->url(function ($record) {
+                        if ($record->foto) {
+                            return asset('storage/' . $record->foto);
+                        }
+                        return null;
+                    }),
+
                 Tables\Columns\TextColumn::make('nama')
                     ->searchable(),
                     

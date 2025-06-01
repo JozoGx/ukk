@@ -19,13 +19,11 @@ return new class extends Migration
             $table->string('alamat');
             $table->string('kontak');
             $table->string('email')->unique();
+            $table->string('foto')->nullable(); 
             $table->boolean('status_pkl')->default(false);
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
-
-
         });
-        
     }
 
     /**

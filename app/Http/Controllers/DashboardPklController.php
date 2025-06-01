@@ -127,6 +127,7 @@ class DashboardPklController extends Controller
         return view('create-pkl', compact('siswas', 'industris', 'gurus'));
     }
     
+    // store method untuk menyimpan data PKL baru
     public function store(Request $request)
     {
         $user = Auth::user();
@@ -140,7 +141,7 @@ class DashboardPklController extends Controller
             'selesai' => 'required|date|after:mulai'
         ];
         
-        // Additional validation for non-admin users
+        // Check if user is not admin
         if (!$user->hasRole('admin')) {
             // Check if user already has PKL
             $hasPkl = Pkl::whereHas('siswa', function($query) use ($user) {
@@ -216,7 +217,7 @@ class DashboardPklController extends Controller
     {
         $user = Auth::user();
         
-        // Check permissions - siswa sekarang bisa melihat semua data PKL
+        // Check permissions 
         if (!$user->hasRole('admin')) {
             if ($user->hasRole('guru')) {
                 $userGuru = Guru::where('user_id', $user->id)->first();
@@ -224,7 +225,6 @@ class DashboardPklController extends Controller
                     abort(403, 'Anda hanya dapat melihat PKL yang Anda bimbing.');
                 }
             }
-            // Siswa bisa melihat semua data PKL, tidak perlu pembatasan
         }
         
         $pkl->load(['siswa', 'industri', 'guru']);
@@ -334,7 +334,7 @@ class DashboardPklController extends Controller
     }
 
     /**
-     * Export PKL data (optional method)
+     * Export PKL data 
      */
     public function export(Request $request)
     {
