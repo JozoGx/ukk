@@ -28,13 +28,16 @@ class SiswaApi extends Controller
                 'gender' => 'required|in:L,P',
                 'alamat' => 'required|string',
                 'kontak' => 'required|string',
-                'status_pkl' => 'required|boolean',
+                'status_pkl' => 'required|in:true,false,1,0',
                 'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
             $data = $request->all();
 
-            // Handle file upload
+            if (isset($data['status_pkl'])) {
+                $data['status_pkl'] = filter_var($data['status_pkl'], FILTER_VALIDATE_BOOLEAN);
+            }
+
             if ($request->hasFile('foto')) {
                 $file = $request->file('foto');
                 $filename = time() . '_' . $file->getClientOriginalName();
@@ -82,15 +85,15 @@ class SiswaApi extends Controller
                 'gender' => 'required|in:L,P',
                 'alamat' => 'required|string',
                 'kontak' => 'required|string',
-                'status_pkl' => 'required|boolean',
+                'status_pkl' => 'required|in:true,false,1,0',
                 'foto' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);
 
             $data = $request->all();
 
-            // Handle file upload
+            
             if ($request->hasFile('foto')) {
-                // Delete old photo if exists
+                
                 if ($siswa->foto && Storage::disk('public')->exists($siswa->foto)) {
                     Storage::disk('public')->delete($siswa->foto);
                 }
@@ -125,7 +128,7 @@ class SiswaApi extends Controller
     public function destroy(Siswa $siswa)
     {
         try {
-            // Delete photo file if exists
+            
             if ($siswa->foto && Storage::disk('public')->exists($siswa->foto)) {
                 Storage::disk('public')->delete($siswa->foto);
             }
