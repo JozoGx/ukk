@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Pkl;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class PklApi extends Controller
 {
@@ -22,6 +23,20 @@ class PklApi extends Controller
             'selesai' => 'required|date|after_or_equal:mulai',
         ]);
 
+        // Validasi minimal 90 hari
+        $mulai = Carbon::parse($request->mulai);
+        $selesai = Carbon::parse($request->selesai);
+        $durasi = $mulai->diffInDays($selesai);
+
+        if ($durasi < 90) {
+            return response()->json([
+                'message' => 'Durasi PKL minimal 90 hari',
+                'errors' => [
+                    'selesai' => ['Tanggal selesai harus minimal 90 hari dari tanggal mulai']
+                ]
+            ], 422);
+        }
+
         return Pkl::create($request->all());
     }
 
@@ -39,6 +54,20 @@ class PklApi extends Controller
             'mulai' => 'required|date',
             'selesai' => 'required|date|after_or_equal:mulai',
         ]);
+
+        // Validasi minimal 90 hari
+        $mulai = Carbon::parse($request->mulai);
+        $selesai = Carbon::parse($request->selesai);
+        $durasi = $mulai->diffInDays($selesai);
+
+        if ($durasi < 90) {
+            return response()->json([
+                'message' => 'Durasi PKL minimal 90 hari',
+                'errors' => [
+                    'selesai' => ['Tanggal selesai harus minimal 90 hari dari tanggal mulai']
+                ]
+            ], 422);
+        }
 
         $pkl->update($request->all());
         return $pkl;

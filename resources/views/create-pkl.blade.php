@@ -25,6 +25,14 @@
                     <div class="mb-8">
                         <h3 class="text-2xl font-bold text-gray-900 mb-2">Create PKL</h3>
                         <p class="text-gray-600">Isi form di bawah untuk menambahkan data PKL baru</p>
+                        <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                            <p class="text-sm text-blue-800">
+                                <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                                </svg>
+                                <strong>Catatan:</strong> Durasi PKL minimal adalah 90 hari (3 bulan)
+                            </p>
+                        </div>
                     </div>
 
                     @if ($errors->any())
@@ -114,28 +122,31 @@
 
                             <!-- Tanggal Mulai -->
                             <div class="space-y-2">
-                                <label for="tanggal_mulai" class="block text-sm font-semibold text-gray-900">
+                                <label for="mulai" class="block text-sm font-semibold text-gray-900">
                                     Tanggal Mulai <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" name="mulai" id="mulai" 
                                        value="{{ old('mulai') }}" 
                                        class="mt-1 block w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
-                                @error('tanggal_mulai')
+                                @error('mulai')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <!-- Tanggal Selesai -->
-                            <div class="space-y-2 md:col-span-2">
-                                <label for="tanggal_selesai" class="block text-sm font-semibold text-gray-900">
+                            <div class="space-y-2">
+                                <label for="selesai" class="block text-sm font-semibold text-gray-900">
                                     Tanggal Selesai <span class="text-red-500">*</span>
                                 </label>
                                 <input type="date" name="selesai" id="selesai" 
                                        value="{{ old('selesai') }}" 
                                        class="mt-1 block w-full px-4 py-3 bg-white border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
-                                @error('tanggal_selesai')
+                                @error('selesai')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
+                                <div id="duration-info" class="text-sm text-gray-600 hidden">
+                                    <span id="duration-text"></span>
+                                </div>
                             </div>
                         </div>
 
@@ -145,7 +156,7 @@
                                class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
                                 Cancel
                             </a>
-                            <button type="submit" 
+                            <button type="submit" id="submit-btn"
                                     class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 transition duration-150 ease-in-out">
                                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -164,23 +175,123 @@
         document.addEventListener('DOMContentLoaded', function() {
             const tanggalMulai = document.getElementById('mulai');
             const tanggalSelesai = document.getElementById('selesai');
+            const durationInfo = document.getElementById('duration-info');
+            const durationText = document.getElementById('duration-text');
+            const submitBtn = document.getElementById('submit-btn');
+            
+            const MINIMAL_DAYS = 90;
 
+            function calculateDuration() {
+                if (tanggalMulai.value && tanggalSelesai.value) {
+                    const startDate = new Date(tanggalMulai.value);
+                    const endDate = new Date(tanggalSelesai.value);
+                    const timeDiff = endDate.getTime() - startDate.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 untuk include start date
+
+                    durationInfo.classList.remove('hidden');
+                    
+                    if (daysDiff < MINIMAL_DAYS) {
+                        durationText.innerHTML = `
+                            <span class="text-red-600 font-medium">
+                                <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                                Durasi: ${daysDiff} hari (Kurang ${MINIMAL_DAYS - daysDiff} hari dari minimal 90 hari)
+                            </span>
+                        `;
+                        submitBtn.disabled = true;
+                        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                        submitBtn.classList.remove('hover:bg-orange-600');
+                    } else {
+                        durationText.innerHTML = `
+                            <span class="text-green-600 font-medium">
+                                <svg class="inline w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                </svg>
+                                Durasi: ${daysDiff} hari (Memenuhi syarat minimal 90 hari)
+                            </span>
+                        `;
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                        submitBtn.classList.add('hover:bg-orange-600');
+                    }
+                } else {
+                    durationInfo.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitBtn.classList.add('hover:bg-orange-600');
+                }
+            }
 
             tanggalMulai.addEventListener('change', function() {
                 if (this.value) {
+                    // Set minimum date untuk tanggal selesai
                     tanggalSelesai.min = this.value;
-                    if (tanggalSelesai.value && tanggalSelesai.value < this.value) {
-                        tanggalSelesai.value = '';
+                    
+                    // Auto set tanggal selesai minimal 90 hari dari tanggal mulai
+                    const startDate = new Date(this.value);
+                    const minEndDate = new Date(startDate);
+                    minEndDate.setDate(startDate.getDate() + MINIMAL_DAYS - 1);
+                    
+                    const minEndDateString = minEndDate.toISOString().split('T')[0];
+                    
+                    // Jika tanggal selesai sudah diisi tapi kurang dari minimal, reset
+                    if (tanggalSelesai.value && tanggalSelesai.value < minEndDateString) {
+                        tanggalSelesai.value = minEndDateString;
+                    }
+                    
+                    // Jika tanggal selesai belum diisi, suggest tanggal minimal
+                    if (!tanggalSelesai.value) {
+                        tanggalSelesai.value = minEndDateString;
                     }
                 }
+                calculateDuration();
             });
 
             tanggalSelesai.addEventListener('change', function() {
                 if (tanggalMulai.value && this.value < tanggalMulai.value) {
                     alert('Tanggal selesai harus setelah tanggal mulai');
                     this.value = '';
+                    return;
+                }
+                
+                if (tanggalMulai.value && this.value) {
+                    const startDate = new Date(tanggalMulai.value);
+                    const endDate = new Date(this.value);
+                    const timeDiff = endDate.getTime() - startDate.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+                    
+                    if (daysDiff < MINIMAL_DAYS) {
+                        const minEndDate = new Date(startDate);
+                        minEndDate.setDate(startDate.getDate() + MINIMAL_DAYS - 1);
+                        const minEndDateString = minEndDate.toISOString().split('T')[0];
+                        
+                        if (confirm(`Durasi PKL minimal adalah ${MINIMAL_DAYS} hari. Apakah Anda ingin mengatur tanggal selesai ke ${minEndDate.toLocaleDateString('id-ID')}?`)) {
+                            this.value = minEndDateString;
+                        }
+                    }
+                }
+                calculateDuration();
+            });
+
+            // Form validation
+            document.querySelector('form').addEventListener('submit', function(e) {
+                if (tanggalMulai.value && tanggalSelesai.value) {
+                    const startDate = new Date(tanggalMulai.value);
+                    const endDate = new Date(tanggalSelesai.value);
+                    const timeDiff = endDate.getTime() - startDate.getTime();
+                    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+                    
+                    if (daysDiff < MINIMAL_DAYS) {
+                        e.preventDefault();
+                        alert(`Durasi PKL harus minimal ${MINIMAL_DAYS} hari. Saat ini hanya ${daysDiff} hari.`);
+                        return false;
+                    }
                 }
             });
+
+            // Initialize calculation if values already exist
+            calculateDuration();
         });
     </script>
     @endpush

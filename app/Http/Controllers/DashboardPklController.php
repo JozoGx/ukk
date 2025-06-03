@@ -8,6 +8,7 @@ use App\Models\Industri;
 use App\Models\Guru;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardPklController extends Controller
 {
@@ -132,13 +133,28 @@ class DashboardPklController extends Controller
     {
         $user = Auth::user();
         
-        // Validation rules
+        // Validation rules - DITAMBAHKAN validasi 90 hari
         $rules = [
             'siswa_id' => 'required|exists:siswas,id',
             'industri_id' => 'required|exists:industris,id',
             'guru_id' => 'required|exists:gurus,id',
             'mulai' => 'required|date|after_or_equal:today',
-            'selesai' => 'required|date|after:mulai'
+            'selesai' => [
+                'required',
+                'date',
+                'after:mulai',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->mulai && $value) {
+                        $mulai = Carbon::parse($request->mulai);
+                        $selesai = Carbon::parse($value);
+                        $diffInDays = $mulai->diffInDays($selesai);
+                        
+                        if ($diffInDays < 90) {
+                            $fail('Durasi PKL minimal 90 hari. Durasi yang Anda pilih: ' . $diffInDays . ' hari.');
+                        }
+                    }
+                }
+            ]
         ];
         
         // Check if user is not admin
@@ -165,7 +181,7 @@ class DashboardPklController extends Controller
             }
         }
         
-        // Custom validation messages
+        // Custom validation messages - DITAMBAHKAN pesan untuk validasi 90 hari
         $messages = [
             'siswa_id.required' => 'Siswa harus dipilih.',
             'siswa_id.exists' => 'Data siswa tidak valid.',
@@ -257,12 +273,28 @@ class DashboardPklController extends Controller
             abort(403, 'Hanya admin yang dapat mengubah data PKL.');
         }
         
+        // Validation rules - DITAMBAHKAN validasi 90 hari
         $rules = [
             'siswa_id' => 'required|exists:siswas,id',
             'industri_id' => 'required|exists:industris,id',
             'guru_id' => 'required|exists:gurus,id',
             'mulai' => 'required|date',
-            'selesai' => 'required|date|after:mulai'
+            'selesai' => [
+                'required',
+                'date',
+                'after:mulai',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($request->mulai && $value) {
+                        $mulai = Carbon::parse($request->mulai);
+                        $selesai = Carbon::parse($value);
+                        $diffInDays = $mulai->diffInDays($selesai);
+                        
+                        if ($diffInDays < 90) {
+                            $fail('Durasi PKL minimal 90 hari. Durasi yang Anda pilih: ' . $diffInDays . ' hari.');
+                        }
+                    }
+                }
+            ]
         ];
         
         $messages = [

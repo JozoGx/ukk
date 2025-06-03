@@ -83,13 +83,21 @@
                                 <label for="kontak" class="block text-sm font-medium text-gray-700 mb-2">
                                     Kontak <span class="text-red-500">*</span>
                                 </label>
-                                <input type="text" 
-                                       name="kontak" 
-                                       id="kontak" 
-                                       value="{{ old('kontak') }}"
-                                       class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kontak') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror"
-                                       placeholder="Masukkan nomor telepon/HP"
-                                       required>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">+62</span>
+                                    </div>
+                                    <input type="text" 
+                                           name="kontak" 
+                                           id="kontak" 
+                                           value="{{ old('kontak') }}"
+                                           class="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 @error('kontak') border-red-300 focus:ring-red-500 focus:border-red-500 @enderror"
+                                           placeholder="8xxxxxxxxxx"
+                                           pattern="8[0-9]{8,12}"
+                                           title="Nomor harus dimulai dengan 8 dan minimal 9 digit"
+                                           required>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Format: 8xxxxxxxxxx (tanpa +62 atau 0)</p>
                                 @error('kontak')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -135,4 +143,57 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const kontakInput = document.getElementById('kontak');
+            
+            kontakInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                
+                // If starts with 62, remove it
+                if (value.startsWith('62')) {
+                    value = value.substring(2);
+                }
+                
+                // If starts with 0, remove it
+                if (value.startsWith('0')) {
+                    value = value.substring(1);
+                }
+                
+                // Ensure it starts with 8
+                if (value && !value.startsWith('8')) {
+                    if (value.charAt(0) !== '8') {
+                        value = '8' + value;
+                    }
+                }
+                
+                // Limit to 13 digits (8 + 12 max)
+                if (value.length > 13) {
+                    value = value.substring(0, 13);
+                }
+                
+                e.target.value = value;
+            });
+            
+            // Prevent non-numeric input
+            kontakInput.addEventListener('keypress', function(e) {
+                if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+            
+            // Auto-add 8 if empty and user types
+            kontakInput.addEventListener('focus', function(e) {
+                if (!e.target.value) {
+                    e.target.value = '8';
+                    setTimeout(() => {
+                        e.target.setSelectionRange(1, 1);
+                    }, 0);
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

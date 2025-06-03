@@ -153,9 +153,6 @@
                                                         <div class="text-sm font-medium text-gray-900">
                                                             {{ $industri->nama }}
                                                         </div>
-                                                        <div class="text-sm text-gray-500">
-                                                            Industri ke-{{ $loop->iteration }}
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
@@ -166,7 +163,16 @@
                                                 <div class="text-sm text-gray-900">{{ $industri->alamat }}</div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">{{ $industri->kontak }}</div>
+                                                <div class="text-sm text-gray-900">
+                                                    @php
+                                                        // Convert nomor kontak untuk display: 8xxx -> 0xxx
+                                                        $displayKontak = $industri->kontak;
+                                                        if (str_starts_with($displayKontak, '8')) {
+                                                            $displayKontak = '08' . substr($displayKontak, 1);
+                                                        }
+                                                    @endphp
+                                                    {{ $displayKontak }}
+                                                </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">{{ $industri->email }}</div>

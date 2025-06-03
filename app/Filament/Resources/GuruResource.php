@@ -44,7 +44,11 @@ class GuruResource extends Resource
                 Forms\Components\TextInput::make('kontak')
                     ->label('Kontak')
                     ->required()
-                    ->maxLength(50),
+                    ->tel()
+                    ->prefix('+62 ')
+                    ->placeholder('8123456789')
+                    ->helperText('Masukkan nomor tanpa kode negara')
+                    ->maxLength(15),
                 Forms\Components\TextInput::make('email')
                     ->label('Email')
                     ->email()
@@ -74,7 +78,30 @@ class GuruResource extends Resource
                     ->label('Alamat')
                     ->limit(50),
                 Tables\Columns\TextColumn::make('kontak')
-                    ->label('Kontak'),
+                    ->label('Kontak')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Nomor telepon disalin!')
+                    ->icon('heroicon-o-phone')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return '-';
+                        
+                        // Jika nomor dimulai dengan 8, tambahkan +62 0
+                        if (str_starts_with($state, '8')) {
+                            return '0' . $state;
+                        }
+                        
+                        // Jika sudah ada +62, ganti dengan +62 0
+                        if (str_starts_with($state, '+62')) {
+                            $number = substr($state, 3); // Ambil bagian setelah +62
+                            $number = ltrim($number, ' '); // Hapus spasi
+                            if (str_starts_with($number, '8')) {
+                                return '0' . $number;
+                            }
+                        }
+                        
+                        return $state; // Return original jika format tidak sesuai
+                    }),
                 Tables\Columns\TextColumn::make('email')
                     ->label('Email')
                     ->sortable()

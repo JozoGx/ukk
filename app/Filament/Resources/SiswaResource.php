@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Notifications\Notification;
 
 class SiswaResource extends Resource
 {
@@ -62,9 +63,13 @@ class SiswaResource extends Resource
                     ->columnSpanFull(),
                     
                 Forms\Components\TextInput::make('kontak')
+                    ->label('Kontak')
                     ->required()
                     ->tel()
-                    ->maxLength(255),
+                    ->prefix('+62 ')
+                    ->placeholder('8123456789')
+                    ->helperText('Masukkan nomor tanpa kode negara')
+                    ->maxLength(15),
                     
                 Forms\Components\TextInput::make('email')
                     ->email()
@@ -110,7 +115,30 @@ class SiswaResource extends Resource
                     ->formatStateUsing(fn (string $state): string => $state === 'L' ? 'Laki-laki' : 'Perempuan'),
                     
                 Tables\Columns\TextColumn::make('kontak')
-                    ->searchable(),
+                    ->label('Kontak')
+                    ->searchable()
+                    ->copyable()
+                    ->copyMessage('Nomor telepon disalin!')
+                    ->icon('heroicon-o-phone')
+                    ->formatStateUsing(function ($state) {
+                        if (!$state) return '-';
+                        
+                        // Jika nomor dimulai dengan 8, tambahkan +62 0
+                        if (str_starts_with($state, '8')) {
+                            return '0' . $state;
+                        }
+                        
+                        // Jika sudah ada +62, ganti dengan +62 0
+                        if (str_starts_with($state, '+62')) {
+                            $number = substr($state, 3); // Ambil bagian setelah +62
+                            $number = ltrim($number, ' '); // Hapus spasi
+                            if (str_starts_with($number, '8')) {
+                                return '0' . $number;
+                            }
+                        }
+                        
+                        return $state; // Return original jika format tidak sesuai
+                    }),
                     
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
@@ -151,11 +179,47 @@ class SiswaResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->before(function (Tables\Actions\DeleteAction $action, $record) {
+                        // Check if student has active PKL
+                        if ($record->pkl()->exists()) {
+                            Notification::make()
+                                ->title('Tidak dapat menghapus siswa!')
+                                ->body('Siswa ini sedang mengikuti PKL. Hapus data PKL terlebih dahulu sebelum menghapus data siswa.')
+                                ->danger()
+                                ->send();
+                            
+                            // Cancel the delete action
+                            $action->cancel();
+                            return false;
+                        }
+                        return true;
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->before(function (Tables\Actions\DeleteBulkAction $action, $records) {
+                            // Check if any of the selected students have active PKL
+                            $studentsWithPKL = $records->filter(function ($record) {
+                                return $record->pkl()->exists();
+                            });
+                            
+                            if ($studentsWithPKL->count() > 0) {
+                                $studentNames = $studentsWithPKL->pluck('nama')->join(', ');
+                                
+                                Notification::make()
+                                    ->title('Tidak dapat menghapus beberapa siswa!')
+                                    ->body("Siswa berikut sedang mengikuti PKL dan tidak dapat dihapus: {$studentNames}. Hapus data PKL mereka terlebih dahulu.")
+                                    ->danger()
+                                    ->send();
+                                
+                                // Cancel the bulk delete action
+                                $action->cancel();
+                                return false;
+                            }
+                            return true;
+                        }),
                 ]),
             ]);
     }
@@ -180,5 +244,4 @@ class SiswaResource extends Resource
     // {
     //     return auth()->user()->hasRole('admin');
     // }
-
 }

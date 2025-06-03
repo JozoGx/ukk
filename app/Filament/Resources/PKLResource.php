@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class PklResource extends Resource
 {
@@ -41,15 +42,61 @@ class PklResource extends Resource
                 Forms\Components\DatePicker::make('mulai')
                     ->label('Tanggal Mulai')
                     ->required()
-                    ->reactive(), 
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
+                        // Auto-set tanggal selesai menjadi 90 hari setelah tanggal mulai
+                        if ($state) {
+                            $mulai = Carbon::parse($state);
+                            $selesaiOtomatis = $mulai->addDays(90)->format('Y-m-d');
+                            $set('selesai', $selesaiOtomatis);
+                        }
+                    }), 
                 Forms\Components\DatePicker::make('selesai')
                     ->label('Tanggal Selesai')
                     ->required()
-                    ->after('mulai') 
-                    ->rule(function (callable $get) {
+                    ->after('mulai')
+                    ->reactive()
+                    ->rules([
+                        function () {
+                            return function (string $attribute, $value, \Closure $fail) {
+                                $mulai = request()->input('data.mulai') ?? request()->input('mulai');
+                                
+                                if ($mulai && $value) {
+                                    $mulaiDate = Carbon::parse($mulai);
+                                    $selesaiDate = Carbon::parse($value);
+                                    $diffInDays = $mulaiDate->diffInDays($selesaiDate);
+                                    
+                                    if ($diffInDays < 90) {
+                                        $fail("Durasi PKL minimal 90 hari. Durasi yang dipilih: {$diffInDays} hari.");
+                                    }
+                                }
+                            };
+                        }
+                    ])
+                    ->helperText('Minimal 90 hari dari tanggal mulai'),
+                
+                // Tambahkan komponen untuk menampilkan durasi
+                Forms\Components\Placeholder::make('durasi_info')
+                    ->label('Informasi Durasi')
+                    ->content(function (Forms\Get $get): string {
                         $mulai = $get('mulai');
-                        return 'after:' . $mulai;
-                    }),
+                        $selesai = $get('selesai');
+                        
+                        if ($mulai && $selesai) {
+                            $mulaiDate = Carbon::parse($mulai);
+                            $selesaiDate = Carbon::parse($selesai);
+                            $diffInDays = $mulaiDate->diffInDays($selesaiDate);
+                            
+                            $status = $diffInDays >= 90 ? '✅ Valid' : '❌ Tidak Valid';
+                            $color = $diffInDays >= 90 ? 'success' : 'danger';
+                            
+                            return "Durasi: {$diffInDays} hari - {$status}";
+                        }
+                        
+                        return 'Pilih tanggal mulai dan selesai untuk melihat durasi';
+                    })
+                    ->reactive()
+                    ->columnSpanFull(),
             ]);
     }
 
@@ -73,6 +120,21 @@ class PklResource extends Resource
                 Tables\Columns\TextColumn::make('guru.nama')->label('Guru Pembimbing')->sortable()->searchable(),
                 Tables\Columns\TextColumn::make('mulai')->label('Tanggal Mulai')->date()->sortable(),
                 Tables\Columns\TextColumn::make('selesai')->label('Tanggal Selesai')->date()->sortable(),
+                // Tambahkan kolom durasi
+                Tables\Columns\TextColumn::make('durasi')
+                    ->label('Durasi (Hari)')
+                    ->getStateUsing(function ($record): string {
+                        $mulai = Carbon::parse($record->mulai);
+                        $selesai = Carbon::parse($record->selesai);
+                        $diffInDays = $mulai->diffInDays($selesai);
+                        return $diffInDays . ' hari';
+                    })
+                    ->badge()
+                    ->color(fn ($record): string => 
+                        Carbon::parse($record->mulai)->diffInDays(Carbon::parse($record->selesai)) >= 90 
+                            ? 'success' 
+                            : 'danger'
+                    ),
             ])
             ->filters([
                 //

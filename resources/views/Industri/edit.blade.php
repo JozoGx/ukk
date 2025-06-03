@@ -48,8 +48,21 @@
                             <!-- Kontak -->
                             <div>
                                 <x-label for="kontak" value="{{ __('Kontak / Telepon') }}" />
-                                <x-input id="kontak" class="block mt-1 w-full" type="text" 
-                                        name="kontak" :value="old('kontak', $industri->kontak)" required />
+                                <div class="relative mt-1">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">+62</span>
+                                    </div>
+                                    <input type="text" 
+                                           name="kontak" 
+                                           id="kontak" 
+                                           value="{{ old('kontak', $industri->kontak) }}"
+                                           class="w-full pl-12 pr-3 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                           placeholder="8xxxxxxxxxx"
+                                           pattern="8[0-9]{8,12}"
+                                           title="Nomor harus dimulai dengan 8 dan minimal 9 digit"
+                                           required>
+                                </div>
+                                <p class="mt-1 text-xs text-gray-500">Format: 8xxxxxxxxxx (tanpa +62 atau 0)</p>
                                 <x-input-error for="kontak" class="mt-2" />
                             </div>
 
@@ -77,4 +90,60 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const kontakInput = document.getElementById('kontak');
+            
+            // Function to convert display format (0xxx) to input format (8xxx)
+            function convertToInputFormat(value) {
+                if (value.startsWith('0')) {
+                    return '8' + value.substring(1);
+                }
+                return value;
+            }
+            
+            // Convert existing value on page load
+            if (kontakInput.value) {
+                kontakInput.value = convertToInputFormat(kontakInput.value);
+            }
+            
+            kontakInput.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+                
+                // If starts with 62, remove it
+                if (value.startsWith('62')) {
+                    value = value.substring(2);
+                }
+                
+                // If starts with 0, remove it
+                if (value.startsWith('0')) {
+                    value = value.substring(1);
+                }
+                
+                // Ensure it starts with 8
+                if (value && !value.startsWith('8')) {
+                    if (value.charAt(0) !== '8') {
+                        value = '8' + value;
+                    }
+                }
+                
+                // Limit to 13 digits (8 + 12 max)
+                if (value.length > 13) {
+                    value = value.substring(0, 13);
+                }
+                
+                e.target.value = value;
+            });
+            
+            // Prevent non-numeric input
+            kontakInput.addEventListener('keypress', function(e) {
+                if (!/[0-9]/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+    @endpush
 </x-app-layout>

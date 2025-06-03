@@ -183,9 +183,6 @@
                                                         <div class="text-sm font-medium text-gray-900">
                                                             {{ $pkl->siswa->nama }}
                                                         </div>
-                                                        <div class="text-sm text-gray-500">
-                                                            {{ $pkl->siswa->kelas ?? 'Kelas tidak diset' }}
-                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>

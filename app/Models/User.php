@@ -71,5 +71,17 @@ class User extends Authenticatable
     {
         return $this->hasOne(Siswa::class);
     }
+    public function isSiswa()
+    {
+        return $this->hasRole('siswa');
+    }
+    public function isAdmin()
+    {
+        return $this->hasRole('admin');
+    }
+    public function getSiswaData()
+    {
+        return $this->isSiswa() ? $this->siswa : null;
+    }
 
 }

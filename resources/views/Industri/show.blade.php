@@ -1,3 +1,7 @@
+@php
+    use Illuminate\Support\Str;
+@endphp
+
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
@@ -53,7 +57,7 @@
                             <div>
                                 <x-label for="kontak" value="{{ __('Nomor Kontak') }}" />
                                 <div class="mt-1 p-3 bg-gray-50 border border-gray-300 rounded-md">
-                                    {{ $industri->kontak ?? '-' }}
+                                    {{ $industri->kontak ? (Str::startsWith($industri->kontak, '8') ? '0' . $industri->kontak : $industri->kontak) : '-' }}
                                 </div>
                             </div>
 
