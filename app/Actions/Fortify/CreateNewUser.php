@@ -34,10 +34,9 @@ class CreateNewUser implements CreatesNewUsers
         return DB::transaction(function () use ($input, $siswa) {
             // Jika siswa ditemukan dan sudah memiliki user, tolak registrasi
             if ($siswa && !is_null($siswa->user_id)) {
-                throw new \Illuminate\Validation\ValidationException(
-                    \Illuminate\Support\Facades\Validator::make([], []),
-                    ['email' => ['Email ini sudah terdaftar oleh user lain.']]
-                );
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'email' => ['Email ini sudah terdaftar oleh user lain.']
+                ]);
             }
 
             // Buat user baru
