@@ -49,7 +49,8 @@ class SiswaResource extends Resource
                     
                 Forms\Components\TextInput::make('nis')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true),
                     
                 Forms\Components\Select::make('gender')
                     ->required()
@@ -69,7 +70,8 @@ class SiswaResource extends Resource
                     ->prefix('+62 ')
                     ->placeholder('8123456789')
                     ->helperText('Masukkan nomor tanpa kode negara')
-                    ->maxLength(15),
+                    ->maxLength(15)
+                    ->unique(ignoreRecord: true),
                     
                 Forms\Components\TextInput::make('email')
                     ->email()

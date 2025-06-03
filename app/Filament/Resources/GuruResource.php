@@ -30,7 +30,7 @@ class GuruResource extends Resource
                     ->label('NIP')
                     ->required()
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true), // Menghindari error unique saat update
+                    ->unique(ignoreRecord: true),
                 Forms\Components\Select::make('gender')
                     ->label('Jenis Kelamin')
                     ->options([
@@ -48,7 +48,8 @@ class GuruResource extends Resource
                     ->prefix('+62 ')
                     ->placeholder('8123456789')
                     ->helperText('Masukkan nomor tanpa kode negara')
-                    ->maxLength(15),
+                    ->maxLength(15)
+                    ->unique(ignoreRecord: true),
                 Forms\Components\TextInput::make('email')
                     ->label('Email')
                     ->email()
