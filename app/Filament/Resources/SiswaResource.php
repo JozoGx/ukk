@@ -25,6 +25,26 @@ class SiswaResource extends Resource
     
     protected static ?string $pluralModelLabel = 'Siswa';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    // Optional: Ubah warna badge
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = static::getModel()::count();
+        
+        // Contoh: hijau jika > 50, kuning jika 20-50, merah jika < 20
+        if ($count > 50) {
+            return 'success';
+        } elseif ($count >= 20) {
+            return 'warning';
+        } else {
+            return 'danger';
+        }
+    }
+
     public static function form(Form $form): Form
     {
         return $form
@@ -201,27 +221,56 @@ class SiswaResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make()
-                        ->before(function (Tables\Actions\DeleteBulkAction $action, $records) {
-                            // Check if any of the selected students have active PKL
-                            $studentsWithPKL = $records->filter(function ($record) {
-                                return $record->pkl()->exists();
-                            });
+                        ->action(function ($records) {
+                            // Pisahkan siswa yang bisa dihapus dan yang tidak bisa
+                            $studentsWithPKL = collect();
+                            $studentsWithoutPKL = collect();
                             
-                            if ($studentsWithPKL->count() > 0) {
-                                $studentNames = $studentsWithPKL->pluck('nama')->join(', ');
+                            foreach ($records as $record) {
+                                if ($record->pkl()->exists()) {
+                                    $studentsWithPKL->push($record);
+                                } else {
+                                    $studentsWithoutPKL->push($record);
+                                }
+                            }
+                            
+                            // Hapus siswa yang tidak memiliki PKL aktif
+                            $deletedCount = 0;
+                            foreach ($studentsWithoutPKL as $student) {
+                                $student->delete();
+                                $deletedCount++;
+                            }
+                            
+                            // Berikan notifikasi berdasarkan hasil
+                            if ($deletedCount > 0 && $studentsWithPKL->count() > 0) {
+                                // Ada yang berhasil dihapus dan ada yang diproteksi
+                                $studentNames = $studentsWithPKL->pluck('nama')->take(3)->join(', ');
+                                $moreCount = $studentsWithPKL->count() - 3;
                                 
                                 Notification::make()
-                                    ->title('Tidak dapat menghapus beberapa siswa!')
-                                    ->body("Siswa berikut sedang mengikuti PKL dan tidak dapat dihapus: {$studentNames}. Hapus data PKL mereka terlebih dahulu.")
-                                    ->danger()
+                                    ->title("Berhasil menghapus {$deletedCount} siswa")
+                                    ->body("Siswa yang sedang PKL tidak dihapus: {$studentNames}" . ($moreCount > 0 ? " dan {$moreCount} lainnya" : ""))
+                                    ->warning()
                                     ->send();
-                                
-                                // Cancel the bulk delete action
-                                $action->cancel();
-                                return false;
+                            } elseif ($deletedCount > 0) {
+                                // Semua berhasil dihapus
+                                Notification::make()
+                                    ->title("Berhasil menghapus {$deletedCount} siswa")
+                                    ->success()
+                                    ->send();
+                            } else {
+                                // Tidak ada yang dihapus
+                                Notification::make()
+                                    ->title('Tidak ada siswa yang dihapus')
+                                    ->body('Semua siswa yang dipilih sedang mengikuti PKL')
+                                    ->warning()
+                                    ->send();
                             }
-                            return true;
-                        }),
+                        })
+                        ->requiresConfirmation()
+                        ->modalHeading('Konfirmasi Penghapusan')
+                        ->modalDescription('Siswa yang sedang mengikuti PKL tidak akan ikut terhapus.')
+                        ->deselectRecordsAfterCompletion(),
                 ]),
             ]);
     }

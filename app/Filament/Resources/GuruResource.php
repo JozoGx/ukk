@@ -18,6 +18,26 @@ class GuruResource extends Resource
 
     protected static ?string $navigationGroup = 'Data';
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
+    // Optional: Ubah warna badge
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $count = static::getModel()::count();
+        
+        // Contoh: hijau jika > 10, kuning jika 5-10, merah jika < 5
+        if ($count > 10) {
+            return 'success';
+        } elseif ($count >= 5) {
+            return 'warning';
+        } else {
+            return 'danger';
+        }
+    }
+
     public static function form(Form $form): Form
     {
         return $form
