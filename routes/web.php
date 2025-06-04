@@ -28,7 +28,11 @@ Route::middleware([
         Route::put('/{pkl}', [DashboardPklController::class, 'update'])->name('update');
         Route::delete('/{pkl}', [DashboardPklController::class, 'destroy'])->name('destroy');
     });
+
+    // Industri additional routes (harus sebelum resource route)
+    Route::get('/industri/statistics', [IndustriController::class, 'getStatistics'])->name('industri.statistics');
+    Route::get('/industri/export', [IndustriController::class, 'export'])->name('industri.export');
+    
+    // Industri Resource Routes
     Route::resource('industri', IndustriController::class);
-    Route::get('/industri/statistics', [IndustriController::class, 'getStatistics']);
-    Route::get('/industri/export', [IndustriController::class, 'export']);
 });

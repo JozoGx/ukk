@@ -56,7 +56,7 @@ class IndustriController extends Controller
         // Pass user role information to view
         $isAdmin = $user->hasRole('admin');
         
-        return view('industri.index', compact('industris', 'isAdmin'));
+        return view('Industri.index', compact('industris', 'isAdmin'));
     }
     
     public function create()
@@ -73,7 +73,7 @@ class IndustriController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk menambah data industri.');
         }
         
-        return view('industri.create');
+        return view('Industri.create');
     }
     
     public function store(Request $request)
@@ -151,7 +151,7 @@ class IndustriController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk melihat detail industri.');
         }
         
-        return view('industri.show', compact('industri'));
+        return view('Industri.show', compact('industri'));
     }
     
     public function edit(Industri $industri)
@@ -168,7 +168,7 @@ class IndustriController extends Controller
             abort(403, 'Hanya admin yang dapat mengedit data industri.');
         }
         
-        return view('industri.edit', compact('industri'));
+        return view('Industri.edit', compact('industri'));
     }
     
     public function update(Request $request, Industri $industri)
