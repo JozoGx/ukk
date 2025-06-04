@@ -29,4 +29,6 @@ Route::middleware([
         Route::delete('/{pkl}', [DashboardPklController::class, 'destroy'])->name('destroy');
     });
     Route::resource('industri', IndustriController::class);
+    Route::get('/industri/statistics', [IndustriController::class, 'getStatistics']);
+    Route::get('/industri/export', [IndustriController::class, 'export']);
 });
